@@ -1,0 +1,64 @@
+# dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# production build
+build/
+dist/
+out/
+
+# environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# cache
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vite/
+
+# testing
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+*/node_modules
+
+# React
+*.tsbuildinfo
+
+# Express / Node
+uploads/
+tmp/
+temp/
+
+# Prisma optional
+prisma/dev.db
+prisma/dev.db-journal
+
+# Docker optional
+.dockerignore
+
+# misc
+*.local

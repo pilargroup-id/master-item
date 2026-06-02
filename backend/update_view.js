@@ -1,0 +1,52 @@
+const pool = require('./db');
+
+async function run() {
+  try {
+    // Drop existing view
+    await pool.query("DROP VIEW IF EXISTS v_variants_full");
+    
+    // Create view with iv.channel instead of ip.channel
+    // Using the same definition but changing `ip`.`channel` to `iv`.`channel`
+    const createViewSql = `
+      CREATE VIEW v_variants_full AS 
+      SELECT 
+        iv.id AS id,
+        iv.variant_sku AS variant_sku,
+        iv.parent_id AS parent_id,
+        ip.parent_sku AS parent_sku,
+        ip.base_name AS parent_name,
+        ip.brand_name AS brand_name,
+        sc.name AS category_name,
+        iv.model_type AS model_type,
+        iv.color_size AS color_size,
+        iv.size_color AS size_color,
+        iv.unit AS unit,
+        iv.qty_pack AS qty_pack,
+        iv.height_cm AS height_cm,
+        iv.weight_gr AS weight_gr,
+        iv.dimension_l AS dimension_l,
+        iv.dimension_w AS dimension_w,
+        iv.dimension_h AS dimension_h,
+        iv.gross_weight_gr AS gross_weight_gr,
+        iv.notes AS notes,
+        iv.status AS status,
+        iv.created_at AS created_at,
+        iv.updated_at AS updated_at,
+        ip.business_unit AS business_unit,
+        iv.channel AS channel,
+        ip.brand_category AS brand_category 
+      FROM item_variants iv 
+      JOIN item_parents ip ON iv.parent_id = ip.id 
+      LEFT JOIN sku_categories sc ON ip.category_id = sc.id
+    `;
+    
+    await pool.query(createViewSql);
+    console.log("View v_variants_full recreated successfully with iv.channel");
+  } catch (err) {
+    console.error("Error:", err);
+  } finally {
+    process.exit(0);
+  }
+}
+
+run();
