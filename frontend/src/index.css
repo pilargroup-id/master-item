@@ -64,8 +64,7 @@
   --radius-2xl: 20px;
   --radius-full: 9999px;
 
-  /* ── Layout ────────────────────────── */
-  --sidebar-w: 256px;
+  /* ── Layout — sidebar-w diatur di TemplateComponents.css ── */
 
   /* ── Transitions ───────────────────── */
   --transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
@@ -107,19 +106,7 @@ h4 { font-size: 0.9375rem; }
 
 p { color: var(--text-secondary); }
 
-/* ─── Layout ─────────────────────────────────────────────── */
-.app-container {
-  display: flex;
-  min-height: 100vh;
-}
-
-.main-content {
-  flex: 1;
-  padding: 2rem 2.25rem;
-  margin-left: var(--sidebar-w);
-  max-width: 100%;
-  min-width: 0;
-}
+/* ─── Layout — dihandle oleh TemplateComponents.css ─────── */
 
 /* ─── Inputs & Forms ─────────────────────────────────────── */
 input, select, textarea {
@@ -730,145 +717,6 @@ body.modal-open { overflow: hidden; }
 ::-webkit-scrollbar-track { background: var(--bg-surface-2); }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-/* ─── Sidebar ─────────────────────────────────────────────── */
-.sidebar {
-  width: var(--sidebar-w);
-  height: 100vh;
-  position: fixed;
-  left: 0;
-  top: 0;
-  background: var(--bg-sidebar);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  z-index: 100;
-}
-
-.sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1.375rem 1.25rem 1.125rem;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-}
-
-.sidebar-brand-icon {
-  width: 36px;
-  height: 36px;
-  background: var(--accent);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.sidebar-brand-name {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.01em;
-}
-.sidebar-brand-tagline {
-  font-size: 0.68rem;
-  color: rgba(255,255,255,0.4);
-  font-weight: 400;
-}
-
-.sidebar-user {
-  margin: 1rem 1rem 0.75rem;
-  padding: 0.75rem 0.875rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: var(--radius-lg);
-}
-.sidebar-user-label {
-  font-size: 0.68rem;
-  color: rgba(255,255,255,0.4);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 0.2rem;
-}
-.sidebar-user-name {
-  font-weight: 600;
-  color: #fff;
-  font-size: 0.9rem;
-}
-
-.sidebar-nav {
-  flex: 1;
-  padding: 0.5rem 0.875rem;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.sidebar-section-label {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.3);
-  padding: 1rem 0.5rem 0.375rem;
-}
-
-.sidebar-link {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.875rem;
-  border-radius: var(--radius-md);
-  color: var(--text-sidebar);
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: var(--transition);
-  text-decoration: none;
-}
-.sidebar-link:hover {
-  background: var(--bg-sidebar-hover);
-  color: #fff;
-}
-.sidebar-link.active {
-  background: var(--bg-sidebar-active);
-  color: #a5b4fc;
-}
-.sidebar-link .sidebar-link-icon {
-  opacity: 0.7;
-  transition: opacity 0.15s;
-  flex-shrink: 0;
-}
-.sidebar-link:hover .sidebar-link-icon,
-.sidebar-link.active .sidebar-link-icon { opacity: 1; }
-
-.sidebar-footer {
-  padding: 0.875rem;
-  border-top: 1px solid rgba(255,255,255,0.07);
-}
-
-.sidebar-logout {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.6rem 0.875rem;
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: var(--radius-md);
-  color: rgba(255,255,255,0.5);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  font-family: inherit;
-}
-.sidebar-logout:hover {
-  background: rgba(220, 38, 38, 0.15);
-  border-color: rgba(220,38,38,0.3);
-  color: #fca5a5;
-}
 
 /* ─── SKU Preview Banner ──────────────────────────────────── */
 .sku-preview-banner {

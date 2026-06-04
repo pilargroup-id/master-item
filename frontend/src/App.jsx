@@ -1,8 +1,7 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 
-// Pages (will be created soon)
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ParentList from './pages/parents/ParentList';
@@ -18,28 +17,75 @@ import Uoms from './pages/master/Uoms';
 import Brands from './pages/master/Brands';
 import Pics from './pages/master/Pics';
 
-// Components
-import Sidebar from './components/Sidebar';
+import TemplateSidebar from './components/template/Sidebar.jsx';
+import TemplateHeader from './components/template/Header.jsx';
+
+const PAGE_TITLES = {
+  '/dashboard': 'Dashboard', '/parents': 'Parent Items', '/variants': 'Variant Items',
+  '/bundles': 'Bundling Items', '/master/pic-categories': 'Category PIC',
+  '/master/item-types': 'Item Types', '/master/ports': 'Ports',
+  '/master/uoms': 'UOMs', '/master/brands': 'Brands', '/master/pics': 'List PIC',
+};
+function getPageTitle(path) {
+  if (PAGE_TITLES[path]) return PAGE_TITLES[path];
+  if (path.startsWith('/parents/')) return path.includes('/new') ? 'Tambah Parent' : 'Edit Parent';
+  if (path.startsWith('/variants/')) return path.includes('/new') ? 'Tambah Variant' : 'Edit Variant';
+  if (path.startsWith('/bundles/')) return path.includes('/new') ? 'Buat Bundle' : 'Edit Bundle';
+  return 'SKU Generator';
+}
 
 const ProtectedRoute = ({ children, requireProductRole = false }) => {
-  const { user, loading, isProductDivision } = useAuth();
-  
+  const { user, loading, isProductDivision, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [collapsed, setCollapsed] = React.useState(false);
+
   if (loading) return (
-    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', height:'100vh', background:'var(--bg-body)', flexDirection:'column', gap:'1rem', color:'var(--text-muted)', fontFamily:'Inter, sans-serif' }}>
-      <span style={{ display:'inline-block', width:32, height:32, border:'3px solid #E2E8F0', borderTopColor:'#6366F1', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
+    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', height:'100vh', background:'#152848', flexDirection:'column', gap:'1rem', color:'rgba(255,255,255,0.5)', fontFamily:'Inter, sans-serif' }}>
+      <span style={{ display:'inline-block', width:32, height:32, border:'3px solid rgba(255,255,255,0.1)', borderTopColor:'#22c55e', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <span style={{ fontSize:'0.875rem' }}>Memuat...</span>
     </div>
   );
   if (!user) return <Navigate to="/login" />;
   if (requireProductRole && !isProductDivision()) return <Navigate to="/dashboard" />;
-  
+
+  const pageTitle = getPageTitle(location.pathname);
+  const divisionLabel =
+    user?.division === 'product'        ? 'Divisi Product'  :
+    user?.division === 'goto_ecommerce' ? 'GoTo Ecommerce'  : 'Administrator';
+
+  const handleAction = (action) => {
+    if (action === 'logout') { logout(); navigate('/login'); }
+  };
+
   return (
-    <div className="app-container">
-      <Sidebar />
-      <main className="main-content">
-        {children}
-      </main>
+    <div className={`dashboard-shell${collapsed ? ' dashboard-shell--sidebar-collapsed' : ''}`}>
+      <TemplateSidebar
+        collapsed={collapsed}
+        mobileOpen={mobileOpen}
+        activePath={location.pathname}
+        userName={user?.name ?? ''}
+        userRole={divisionLabel}
+        onAction={handleAction}
+        onToggleCollapse={() => setCollapsed(c => !c)}
+        onCloseMobile={() => setMobileOpen(false)}
+      />
+      <div className="dashboard-stage">
+        <TemplateHeader
+          title="Master Item 22"
+          breadcrumb={[
+            { label: 'SKU Generator', href: '/dashboard' },
+            { label: pageTitle, active: true },
+          ]}
+          showMenuButton={true}
+          onMenuToggle={() => setMobileOpen(o => !o)}
+        />
+        <main className="dashboard-main">
+          {children}
+        </main>
+      </div>
     </div>
   );
 };

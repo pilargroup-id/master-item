@@ -1,15 +1,15 @@
 -- ============================================================
 -- SKU GENERATOR - Database Migration
--- Database: db_masteritem
+-- Database: newitem
 -- Engine: MariaDB / MySQL InnoDB
 -- Charset: utf8mb4
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS `db_masteritem`
+CREATE DATABASE IF NOT EXISTS `newitem`
   DEFAULT CHARACTER SET utf8mb4
   COLLATE utf8mb4_general_ci;
 
-USE `db_masteritem`;
+USE `newitem`;
 
 -- ============================================================
 -- USER TABLE (untuk auth standalone, reference ke pilargroup)
@@ -17,7 +17,7 @@ USE `db_masteritem`;
 CREATE TABLE IF NOT EXISTS `sku_users` (
   `id` VARCHAR(36) NOT NULL,
   `name` VARCHAR(150) NOT NULL,
-  `email` VARCHAR(150) UNIQUE NOT NULL,
+  `username` VARCHAR(150) UNIQUE NOT NULL,
   `password` VARCHAR(255) NOT NULL,
   `division` ENUM('product','goto_ecommerce','admin') NOT NULL DEFAULT 'goto_ecommerce',
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
@@ -26,11 +26,12 @@ CREATE TABLE IF NOT EXISTS `sku_users` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Seed: admin user default (password: Admin@123)
-INSERT IGNORE INTO `sku_users` (`id`, `name`, `email`, `password`, `division`) VALUES
-('usr-admin-0001', 'Administrator', 'admin@pilargroup.id', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'),
-('usr-product-001', 'Divisi Product', 'product@pilargroup.id', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'product'),
-('usr-goto-0001', 'Divisi GoTo Ecommerce', 'goto@pilargroup.id', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'goto_ecommerce');
+-- Seed: default users (password: password)
+-- Hash '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi' = 'password'
+INSERT IGNORE INTO `sku_users` (`id`, `name`, `username`, `password`, `division`) VALUES
+('usr-admin-0001', 'Administrator', 'admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin'),
+('usr-product-001', 'Divisi Product', 'product', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'product'),
+('usr-goto-0001', 'Divisi GoTo Ecommerce', 'goto', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'goto_ecommerce');
 
 -- ============================================================
 -- SEQUENCE POOL 1: Parent SKU (P000001, P000002, ...)

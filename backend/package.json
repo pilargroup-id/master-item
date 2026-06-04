@@ -5,7 +5,10 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "migrate": "node database/migrations/run-migration.js",
+    "seed:brands": "node database/seeds/seed_brands.js",
+    "seed:all": "node database/seeds/seed_brands.js && node database/seeds/seed_item_types.js && node database/seeds/seed_ports.js && node database/seeds/seed_uoms.js && node database/seeds/seed_pics.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
