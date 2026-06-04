@@ -719,13 +719,53 @@ select {
   z-index: 4;
 }
 
+.sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-teal) transparent;
+}
+
 .sidebar::-webkit-scrollbar {
   width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
 }
 
 .sidebar::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-teal-dark) 100%);
+  box-shadow: 0 0 8px rgba(42, 157, 143, 0.5);
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-teal-dark) 100%);
+  box-shadow: 0 0 12px rgba(42, 157, 143, 0.75);
+}
+
+.sidebar-nav {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-teal) transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-teal-dark) 100%);
+  box-shadow: 0 0 8px rgba(42, 157, 143, 0.45);
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-teal-dark) 100%);
+  box-shadow: 0 0 12px rgba(42, 157, 143, 0.7);
 }
 
 .header-main {

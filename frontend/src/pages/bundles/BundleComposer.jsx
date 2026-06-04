@@ -1,16 +1,53 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { Save, ArrowLeft, Search, Plus, Trash2, Package, PackageSearch } from 'lucide-react';
+import { Search, Plus, Trash2, Package, PackageSearch } from 'lucide-react';
 
-export default function BundleComposer() {
-  const navigate = useNavigate();
-  const [formData, setFormData]             = useState({ bundle_name: '', description: '' });
-  const [searchVariant, setSearchVariant]   = useState('');
-  const [variantResults, setVariantResults] = useState([]);
+const inputStyle = {
+  width: '100%', padding: '0.6rem 0.85rem',
+  border: '1px solid rgba(26,42,87,0.14)', borderRadius: 10,
+  background: '#fff', color: '#182b58',
+  fontSize: '0.875rem', fontFamily: 'inherit',
+  outline: 'none', boxSizing: 'border-box',
+  transition: 'border-color 0.2s, box-shadow 0.2s',
+};
+
+const focusHandlers = {
+  onFocus: e => {
+    e.target.style.borderColor = 'rgba(42,157,143,0.55)';
+    e.target.style.boxShadow  = '0 0 0 3px rgba(42,157,143,0.12)';
+  },
+  onBlur: e => {
+    e.target.style.borderColor = 'rgba(26,42,87,0.14)';
+    e.target.style.boxShadow  = 'none';
+  },
+};
+
+const sectionStyle = {
+  padding: '1.125rem',
+  borderRadius: 14,
+  border: '1px solid rgba(26,42,87,0.08)',
+  background: 'rgba(248,250,252,0.6)',
+};
+
+function FieldLabel({ children, hint, required }) {
+  return (
+    <label style={{
+      display: 'flex', alignItems: 'center', gap: 4,
+      fontSize: '0.8rem', fontWeight: 600, color: '#445674', marginBottom: 5,
+    }}>
+      {children}
+      {required && <span style={{ color: '#e05252' }}>*</span>}
+      {hint && <span style={{ fontWeight: 400, color: '#8496b0', fontSize: '0.72rem' }}>({hint})</span>}
+    </label>
+  );
+}
+
+export default function BundleComposer({ onSaved, onSubmittingChange }) {
+  const [formData,         setFormData]         = useState({ bundle_name: '', description: '' });
+  const [searchVariant,    setSearchVariant]    = useState('');
+  const [variantResults,   setVariantResults]   = useState([]);
   const [selectedVariants, setSelectedVariants] = useState([]);
-  const [previewSKU, setPreviewSKU]         = useState('68YY--------');
-  const [submitting, setSubmitting]         = useState(false);
+  const [previewSKU,       setPreviewSKU]       = useState('68YY--------');
 
   useEffect(() => {
     axios.get('/api/variants/preview-sku').then(res => {
@@ -50,233 +87,263 @@ export default function BundleComposer() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedVariants.length) return alert('Pilih minimal 1 Variant Item untuk bundle ini.');
-    setSubmitting(true);
+    if (!selectedVariants.length) return alert('Please select at least 1 Variant Item.');
+    onSubmittingChange?.(true);
     try {
-      const payload = {
-        bundle_name: formData.bundle_name,
-        description: formData.description,
+      await axios.post('/api/bundles', {
+        bundle_name:  formData.bundle_name,
+        description:  formData.description,
         variants: selectedVariants.map(v => ({ variant_id: v.variant.id, quantity: v.qty })),
-      };
-      await axios.post('/api/bundles', payload);
-      alert('Bundle Item berhasil dibuat!');
-      navigate('/bundles');
+      });
+      onSaved?.();
     } catch (err) {
-      alert(err.response?.data?.message || 'Terjadi kesalahan pada server');
+      alert(err.response?.data?.message || 'A server error occurred.');
     } finally {
-      setSubmitting(false);
+      onSubmittingChange?.(false);
     }
   };
 
   const totalQty = selectedVariants.reduce((sum, v) => sum + v.qty, 0);
 
   return (
-    <div className="animate-fade-in" style={{ paddingBottom:'2rem' }}>
-      {/* Header */}
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <button onClick={() => navigate('/bundles')} className="btn-icon" style={{ width:38, height:38 }}>
-          <ArrowLeft size={18} />
-        </button>
-        <div>
-          <h1 style={{ marginBottom:0 }}>Bundle Composer</h1>
-          <p style={{ margin:0, fontSize:'0.875rem', color:'var(--text-muted)' }}>
-            Buat paket komersial dengan menggabungkan Variant Item
-          </p>
+    <form
+      id="bundle-composer-form"
+      onSubmit={handleSubmit}
+      style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', alignItems: 'flex-start' }}
+    >
+
+      {/* ── LEFT ─────────────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+        {/* SKU Preview */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0.875rem 1.125rem',
+          background: 'rgba(233,196,106,0.08)', border: '1.5px dashed rgba(233,196,106,0.45)',
+          borderRadius: 14,
+        }}>
+          <div>
+            <div style={{
+              fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase',
+              letterSpacing: '0.08em', color: '#8496b0', marginBottom: 4,
+            }}>
+              Bundle SKU Preview
+            </div>
+            <div style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '1.3rem', color: '#b45309', letterSpacing: 2 }}>
+              {previewSKU}
+            </div>
+          </div>
+          <PackageSearch size={26} style={{ color: '#b45309', opacity: 0.3 }} />
+        </div>
+
+        {/* Form fields */}
+        <div style={sectionStyle}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            <div>
+              <FieldLabel required>Bundle Name</FieldLabel>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Holiday Family Package"
+                value={formData.bundle_name}
+                onChange={e => setFormData({ ...formData, bundle_name: e.target.value })}
+                style={inputStyle}
+                {...focusHandlers}
+              />
+            </div>
+            <div>
+              <FieldLabel hint="optional">Promo Description</FieldLabel>
+              <textarea
+                rows={3}
+                placeholder="Bundle notes..."
+                value={formData.description}
+                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                style={{ ...inputStyle, resize: 'vertical' }}
+                {...focusHandlers}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Variant Search */}
+        <div style={sectionStyle}>
+          <h4 style={{
+            margin: '0 0 0.75rem', fontSize: '0.85rem', fontWeight: 700, color: '#182b58',
+            display: 'flex', alignItems: 'center', gap: '0.45rem',
+          }}>
+            <Search size={14} style={{ color: '#2a9d8f' }} />
+            Search &amp; Add Variant
+          </h4>
+
+          <div style={{ position: 'relative' }}>
+            <Search size={14} style={{
+              position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)',
+              color: '#8496b0', pointerEvents: 'none',
+            }} />
+            <input
+              type="text"
+              placeholder="Type SKU or variant name..."
+              value={searchVariant}
+              onChange={e => setSearchVariant(e.target.value)}
+              style={{ ...inputStyle, paddingLeft: '2.3rem' }}
+              {...focusHandlers}
+            />
+
+            {variantResults.length > 0 && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 20,
+                background: 'rgba(255,255,255,0.99)', backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(26,42,87,0.10)', borderRadius: 12,
+                boxShadow: '0 12px 32px rgba(26,42,87,0.14)', overflow: 'hidden',
+              }}>
+                {variantResults.map(v => (
+                  <div
+                    key={v.id}
+                    style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '0.65rem 1rem', borderBottom: '1px solid rgba(26,42,87,0.06)',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(26,42,87,0.04)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <span style={{
+                        display: 'inline-flex', padding: '0.18rem 0.55rem', borderRadius: 6,
+                        background: 'rgba(42,157,143,0.10)', color: '#18786e',
+                        fontSize: '0.73rem', fontWeight: 700, fontFamily: 'monospace',
+                        marginRight: '0.45rem',
+                      }}>
+                        {v.variant_sku}
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: '#445674' }}>
+                        {v.parent_name}{v.model_type ? ` — ${v.model_type}` : ''}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleAddVariant(v)}
+                      style={{
+                        height: 30, padding: '0 0.7rem', flexShrink: 0, marginLeft: '0.5rem',
+                        border: 'none', borderRadius: 7, cursor: 'pointer',
+                        background: 'linear-gradient(135deg, #2a9d8f 0%, #1f8b7e 100%)',
+                        color: '#fff', fontSize: '0.76rem', fontWeight: 700,
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                      }}
+                    >
+                      <Plus size={12} /> Add
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1.25rem', alignItems:'flex-start' }}>
-
-          {/* LEFT: Info + Search */}
-          <div style={{ display:'flex', flexDirection:'column', gap:'1.25rem' }}>
-
-            {/* SKU Preview + Form */}
-            <div className="card" style={{ padding:'1.375rem' }}>
-              {/* Bundle SKU Preview */}
-              <div style={{
-                display:'flex', alignItems:'center', justifyContent:'space-between',
-                padding:'0.875rem 1.125rem',
-                background:'var(--warning-light)', border:'1.5px dashed var(--warning-border)',
-                borderRadius:'var(--radius-lg)', marginBottom:'1.25rem',
-              }}>
-                <div>
-                  <div style={{ fontSize:'0.72rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-muted)', marginBottom:'0.2rem' }}>
-                    Bundle SKU Preview
-                  </div>
-                  <div style={{ fontFamily:'monospace', fontWeight:800, fontSize:'1.375rem', color:'var(--warning)', letterSpacing:2 }}>
-                    {previewSKU}
-                  </div>
-                </div>
-                <PackageSearch size={28} color="var(--warning)" style={{ opacity:0.4 }} />
-              </div>
-
-              <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
-                <div className="form-group">
-                  <label>Bundle Name <span style={{ color:'var(--danger)' }}>*</span></label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="cth: Paket Lebaran Keluarga"
-                    value={formData.bundle_name}
-                    onChange={e => setFormData({ ...formData, bundle_name: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Deskripsi Promosi <span style={{ fontSize:'0.72rem', color:'var(--text-muted)', fontWeight:400, textTransform:'none', letterSpacing:0 }}>(opsional)</span></label>
-                  <textarea
-                    rows={3}
-                    placeholder="Catatan bundle..."
-                    value={formData.description}
-                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                    style={{ resize:'vertical' }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Variant Search */}
-            <div className="card" style={{ padding:'1.375rem' }}>
-              <h3 style={{ fontSize:'0.9rem', marginBottom:'0.875rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                <Search size={16} /> Cari & Tambah Variant
-              </h3>
-              <div style={{ position:'relative' }}>
-                <Search size={15} style={{ position:'absolute', left:'0.75rem', top:'50%', transform:'translateY(-50%)', color:'var(--text-muted)', pointerEvents:'none' }} />
-                <input
-                  type="text"
-                  placeholder="Ketik SKU atau nama variant..."
-                  value={searchVariant}
-                  onChange={e => setSearchVariant(e.target.value)}
-                  style={{ paddingLeft:'2.25rem' }}
-                />
-                {variantResults.length > 0 && (
-                  <div style={{
-                    position:'absolute', top:'calc(100% + 4px)', left:0, right:0,
-                    background:'var(--bg-surface)', border:'1.5px solid var(--border)',
-                    borderRadius:'var(--radius-lg)', zIndex:10,
-                    boxShadow:'var(--shadow-lg)', overflow:'hidden',
-                  }}>
-                    {variantResults.map(v => (
-                      <div
-                        key={v.id}
-                        className="d-flex justify-content-between align-items-center"
-                        style={{
-                          padding:'0.75rem 1rem', borderBottom:'1px solid var(--border)',
-                          cursor:'pointer', transition:'background 0.15s',
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                      >
-                        <div>
-                          <span className="badge badge-success" style={{ fontFamily:'monospace', fontSize:'0.75rem', marginRight:'0.5rem' }}>{v.variant_sku}</span>
-                          <span style={{ fontSize:'0.82rem', color:'var(--text-secondary)' }}>{v.parent_name} {v.model_type ? `— ${v.model_type}` : ''}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleAddVariant(v)}
-                          className="btn btn-primary"
-                          style={{ padding:'0.3rem 0.75rem', fontSize:'0.78rem', flexShrink:0 }}
-                        >
-                          <Plus size={13} /> Tambah
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT: Composition */}
-          <div className="card" style={{ padding:'1.375rem' }}>
-            <div className="d-flex align-items-center justify-content-between mb-4">
-              <h3 style={{ fontSize:'0.9rem', margin:0, display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                <Package size={16} color="var(--warning)" /> Komposisi Bundle
-              </h3>
-              {selectedVariants.length > 0 && (
-                <span className="badge badge-warning">{selectedVariants.length} variant · {totalQty} qty</span>
-              )}
-            </div>
-
-            <div style={{ display:'flex', flexDirection:'column', gap:'0.625rem', minHeight:200, marginBottom:'1.25rem' }}>
-              {selectedVariants.map(item => (
-                <div key={item.variant.id} style={{
-                  display:'flex', alignItems:'center', gap:'1rem',
-                  padding:'0.875rem 1rem',
-                  background:'var(--bg-surface-2)',
-                  border:'1.5px solid var(--border)',
-                  borderRadius:'var(--radius-lg)',
-                  transition:'border-color 0.15s',
-                }}>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'0.2rem' }}>
-                      <span className="badge badge-success" style={{ fontFamily:'monospace', fontSize:'0.75rem' }}>
-                        {item.variant.variant_sku}
-                      </span>
-                    </div>
-                    <div style={{ fontSize:'0.85rem', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                      {item.variant.parent_name} {item.variant.color_size ? `(${item.variant.color_size})` : ''}
-                    </div>
-                    <div style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>
-                      Unit: {item.variant.unit} | Qty/Pack: {item.variant.qty_pack}
-                    </div>
-                  </div>
-
-                  <div style={{ flexShrink:0 }}>
-                    <div style={{ fontSize:'0.7rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', color:'var(--text-muted)', marginBottom:'0.25rem' }}>Qty</div>
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.qty}
-                      onChange={e => handleQtyChange(item.variant.id, e.target.value)}
-                      style={{ width:64, padding:'0.35rem 0.5rem', textAlign:'center', fontSize:'0.9rem', fontWeight:700 }}
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveVariant(item.variant.id)}
-                    className="btn-icon"
-                    title="Hapus"
-                    style={{ color:'var(--danger)', background:'var(--danger-light)', border:'1.5px solid var(--danger-border)', flexShrink:0 }}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-
-              {selectedVariants.length === 0 && (
-                <div style={{
-                  display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-                  flex:1, minHeight:160, border:'1.5px dashed var(--border)',
-                  borderRadius:'var(--radius-lg)', color:'var(--text-muted)', textAlign:'center',
-                  padding:'2rem', gap:'0.5rem',
-                }}>
-                  <Package size={28} style={{ opacity:0.25 }} />
-                  <p style={{ margin:0, fontSize:'0.82rem' }}>Belum ada variant ditambahkan.<br/>Cari dan tambahkan variant di panel kiri.</p>
-                </div>
-              )}
-            </div>
-
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', paddingTop:'1rem', borderTop:'1.5px solid var(--border)', flexWrap:'wrap', gap:'0.75rem' }}>
-              <button type="button" className="btn btn-outline" onClick={() => navigate('/bundles')}>
-                Batal
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={submitting || !selectedVariants.length}
-              >
-                {submitting
-                  ? <><span className="spinner" style={{ borderTopColor:'#fff', width:14, height:14 }} /> Menyimpan...</>
-                  : <><Save size={16} /> Simpan Bundle</>
-                }
-              </button>
-            </div>
-          </div>
-
+      {/* ── RIGHT: Composition ──────────────────────────────────────────── */}
+      <div style={{ ...sectionStyle, display: 'flex', flexDirection: 'column', gap: '0.875rem', minHeight: 360 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h4 style={{
+            margin: 0, fontSize: '0.85rem', fontWeight: 700, color: '#182b58',
+            display: 'flex', alignItems: 'center', gap: '0.45rem',
+          }}>
+            <Package size={14} style={{ color: '#b45309' }} />
+            Bundle Composition
+          </h4>
+          {selectedVariants.length > 0 && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', padding: '0.22rem 0.6rem',
+              borderRadius: 8, background: 'rgba(233,196,106,0.15)', border: '1px solid rgba(233,196,106,0.3)',
+              color: '#b45309', fontSize: '0.72rem', fontWeight: 700,
+            }}>
+              {selectedVariants.length} variant · {totalQty} qty
+            </span>
+          )}
         </div>
-      </form>
-    </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+          {selectedVariants.map(item => (
+            <div
+              key={item.variant.id}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.875rem',
+                padding: '0.75rem 0.875rem',
+                border: '1px solid rgba(26,42,87,0.08)', borderRadius: 10,
+                background: '#fff',
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ marginBottom: 3 }}>
+                  <span style={{
+                    display: 'inline-flex', padding: '0.18rem 0.55rem', borderRadius: 6,
+                    background: 'rgba(42,157,143,0.10)', color: '#18786e',
+                    fontSize: '0.73rem', fontWeight: 700, fontFamily: 'monospace',
+                  }}>
+                    {item.variant.variant_sku}
+                  </span>
+                </div>
+                <div style={{
+                  fontSize: '0.82rem', fontWeight: 500, color: '#182b58',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {item.variant.parent_name}
+                  {item.variant.color_size ? ` (${item.variant.color_size})` : ''}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#8496b0', marginTop: 1 }}>
+                  Unit: {item.variant.unit} · Qty/Pack: {item.variant.qty_pack}
+                </div>
+              </div>
+
+              <div style={{ flexShrink: 0, textAlign: 'center' }}>
+                <div style={{
+                  fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase',
+                  letterSpacing: '0.05em', color: '#8496b0', marginBottom: 3,
+                }}>
+                  Qty
+                </div>
+                <input
+                  type="number"
+                  min="1"
+                  value={item.qty}
+                  onChange={e => handleQtyChange(item.variant.id, e.target.value)}
+                  style={{
+                    width: 58, padding: '0.3rem 0.4rem', textAlign: 'center',
+                    fontSize: '0.88rem', fontWeight: 700,
+                    border: '1px solid rgba(26,42,87,0.14)', borderRadius: 7,
+                    background: '#fff', color: '#182b58', outline: 'none',
+                  }}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleRemoveVariant(item.variant.id)}
+                className="users-table__icon-button users-table__icon-button--danger"
+                title="Remove"
+                style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          ))}
+
+          {selectedVariants.length === 0 && (
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              flex: 1, minHeight: 140,
+              border: '1.5px dashed rgba(26,42,87,0.10)', borderRadius: 10,
+              color: '#8496b0', textAlign: 'center', padding: '2rem', gap: '0.5rem',
+            }}>
+              <Package size={26} style={{ opacity: 0.22 }} />
+              <p style={{ margin: 0, fontSize: '0.8rem', lineHeight: 1.6 }}>
+                No variants added yet.<br />Search and add from the left panel.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+    </form>
   );
 }

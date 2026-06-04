@@ -5,7 +5,7 @@ export default function useVariantList() {
   const [variants,   setVariants]   = useState([]);
   const [search,     setSearch]     = useState('');
   const [page,       setPage]       = useState(1);
-  const [pageSize,   setPageSize]   = useState(50);
+  const [pageSize,   setPageSize]   = useState(25);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [loading,    setLoading]    = useState(true);
