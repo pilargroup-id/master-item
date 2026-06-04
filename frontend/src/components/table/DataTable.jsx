@@ -141,6 +141,16 @@ function getDetailSections(detail, row, index) {
   return detail.sections ?? []
 }
 
+function getDetailSectionTone(section) {
+  const tone = section.tone ?? 'accent'
+
+  return {
+    background: `var(--${tone}-light, var(--accent-light))`,
+    borderColor: `var(--${tone}-border, var(--accent-border))`,
+    color: `var(--${tone}, var(--accent))`,
+  }
+}
+
 export function DataTableStatus({
   children,
   variant = 'active',
@@ -296,6 +306,7 @@ function DataTable({
                 const detailTitle = resolveTemplateValue(detail?.title, row, index)
                 const detailDescription = resolveTemplateValue(detail?.description, row, index)
                 const detailEyebrow = resolveTemplateValue(detail?.eyebrow, row, index)
+                const DetailButtonIcon = resolveTemplateValue(detail?.buttonIcon, row, index)
                 const rowClassName = [
                   'users-table__row',
                   isRowInteractive ? 'users-table__row--interactive' : '',
@@ -340,6 +351,9 @@ function DataTable({
                             aria-controls={accordionId}
                             title={isExpanded ? 'Tutup detail' : 'Buka detail'}
                           >
+                            {DetailButtonIcon ? (
+                              <DetailButtonIcon size={15} aria-hidden="true" />
+                            ) : null}
                             <span>{detail.buttonLabel ?? 'Detail'}</span>
                             <ChevronDown
                               size={16}
@@ -385,6 +399,15 @@ function DataTable({
                                     }`}
                                   >
                                     <div className="users-table__detail-section-header">
+                                      {section.icon ? (
+                                        <span
+                                          className="users-table__detail-section-icon"
+                                          style={getDetailSectionTone(section)}
+                                          aria-hidden="true"
+                                        >
+                                          <section.icon size={15} />
+                                        </span>
+                                      ) : null}
                                       <p className="users-table__detail-section-eyebrow">
                                         {section.title}
                                       </p>

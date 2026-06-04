@@ -2076,8 +2076,19 @@ select {
 .users-table__detail-section-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  justify-content: flex-start;
+  gap: 0.55rem;
+}
+
+.users-table__detail-section-icon {
+  width: 30px;
+  height: 30px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .users-table__detail-section-eyebrow {
@@ -2320,6 +2331,51 @@ select {
   flex-shrink: 0;
 }
 
+/* ── Icon button (edit / delete inline in table rows) ── */
+.users-table__icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgba(26, 42, 87, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #445674;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.users-table__icon-button:hover {
+  transform: translateY(-1px);
+  background: rgba(26, 42, 87, 0.07);
+  border-color: rgba(26, 42, 87, 0.22);
+  box-shadow: 0 4px 12px rgba(26, 42, 87, 0.1);
+}
+
+.users-table__icon-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.22);
+}
+
+.users-table__icon-button--danger {
+  color: #b42318;
+  border-color: rgba(239, 68, 68, 0.18);
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.users-table__icon-button--danger:hover {
+  background: rgba(239, 68, 68, 0.13);
+  border-color: rgba(239, 68, 68, 0.32);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.13);
+}
+
 .users-table-pagination {
   display: flex;
   align-items: center;
@@ -2329,10 +2385,58 @@ select {
   margin-top: 18px;
 }
 
+.users-table-pagination__meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .users-table-pagination__summary {
   margin: 0;
   color: #5a6b88;
-  font-size: 0.92rem;
+  font-size: 0.85rem;
+}
+
+.users-table-pagination__page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #5a6b88;
+}
+
+.users-table-pagination__select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0.5rem 2.2rem 0.5rem 0.85rem;
+  border: 1px solid rgba(26, 42, 87, 0.12);
+  border-radius: 12px;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%232a9d8f' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  color: var(--primary-blue, #182b58);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+  outline: none;
+  min-height: 42px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.users-table-pagination__select:hover {
+  border-color: rgba(42, 157, 143, 0.4);
+  background-color: rgba(42, 157, 143, 0.03);
+}
+
+.users-table-pagination__select:focus {
+  border-color: rgba(42, 157, 143, 0.55);
+  box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.12);
 }
 
 .users-table-pagination__controls {

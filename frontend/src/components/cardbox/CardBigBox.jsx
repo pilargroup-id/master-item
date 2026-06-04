@@ -1,5 +1,3 @@
-import '../../styles/templateStyle/TemplateComponents.css'
-
 function CardBigBox({
   as: Component = 'section',
   eyebrow,

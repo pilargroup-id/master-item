@@ -19,6 +19,7 @@ import Pics from './pages/master/Pics';
 
 import TemplateSidebar from './components/template/Sidebar.jsx';
 import TemplateHeader from './components/template/Header.jsx';
+import BackgroundMain from './components/template/BackgroundMain.jsx';
 
 const PAGE_TITLES = {
   '/dashboard': 'Dashboard', '/parents': 'Parent Items', '/variants': 'Variant Items',
@@ -73,6 +74,7 @@ const ProtectedRoute = ({ children, requireProductRole = false }) => {
         onCloseMobile={() => setMobileOpen(false)}
       />
       <div className="dashboard-stage">
+        <BackgroundMain />
         <TemplateHeader
           title="Master Item 22"
           breadcrumb={[

@@ -1,5 +1,3 @@
-import '../../styles/templateStyle/TemplateComponents.css'
-
 function CardBox({
   as: Component = 'article',
   eyebrow,
