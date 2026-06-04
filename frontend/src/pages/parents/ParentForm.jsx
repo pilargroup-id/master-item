@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Save, ArrowLeft, Info, X } from 'lucide-react';
+import { Save, ArrowLeft, Info, X, Search, ChevronDown, Check } from 'lucide-react';
 import parentsService from '../../services/parentsService';
 import AlertModal from '../../components/AlertModal';
 import CardBigBox from '../../components/cardbox/CardBigBox';
@@ -22,7 +23,8 @@ export default function ParentForm({ modalId, onClose, onSaved }) {
   const [similarSubBrands, setSimilarSubBrands]  = useState([]);
   const [showSimilarToast, setShowSimilarToast]  = useState(false);
   const [alert,            setAlert]             = useState(null);
-  const toastTimer = useRef(null);
+  const toastTimer         = useRef(null);
+  const subBrandUserTyped  = useRef(false); // hanya true kalau user yang ketik, bukan load data
 
   const showAlert = (s, m) => setAlert({ severity: s, message: m });
 
@@ -33,6 +35,7 @@ export default function ParentForm({ modalId, onClose, onSaved }) {
   }, []);
 
   useEffect(() => {
+    subBrandUserTyped.current = false; // reset saat form dibuka/berganti mode
     if (isEdit) {
       parentsService.getById(id)
         .then(r => {
@@ -50,7 +53,13 @@ export default function ParentForm({ modalId, onClose, onSaved }) {
   }, [id, isEdit]);
 
   useEffect(() => {
-    if (!formData.sub_brand || formData.sub_brand.length < 2) { setSimilarSubBrands([]); return; }
+    // Jangan cek saat data edit di-load — hanya kalau user yang ketik
+    if (!subBrandUserTyped.current) return;
+    if (!formData.sub_brand || formData.sub_brand.length < 2) {
+      setSimilarSubBrands([]);
+      setShowSimilarToast(false);
+      return;
+    }
     const t = setTimeout(() => {
       parentsService.similarSubBrands(formData.sub_brand)
         .then(r => {
@@ -126,14 +135,22 @@ export default function ParentForm({ modalId, onClose, onSaved }) {
           {/* Form fields */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem 1rem', marginBottom: '1.25rem' }}>
             <Field label="Brand" required>
-              <StyledSelect value={formData.brand_id} onChange={set('brand_id')} required>
-                <option value="">Select Brand</option>
-                {options.brands.map(b => <option key={b.id} value={b.id}>{b.brand_name}</option>)}
-              </StyledSelect>
+              <SearchableSelect
+                required
+                value={formData.brand_id}
+                onChange={(id) => setFormData(p => ({ ...p, brand_id: id }))}
+                options={options.brands.map(b => ({ id: b.id, label: b.brand_name }))}
+                placeholder="Select Brand"
+              />
             </Field>
 
             <Field label="Sub Brand">
-              <StyledInput type="text" placeholder="e.g. Pro, Eco, Lite" value={formData.sub_brand} onChange={set('sub_brand')} />
+              <StyledInput
+                type="text"
+                placeholder="e.g. Pro, Eco, Lite"
+                value={formData.sub_brand}
+                onChange={(e) => { subBrandUserTyped.current = true; set('sub_brand')(e); }}
+              />
             </Field>
 
             <Field label="Item Name" required>
@@ -141,24 +158,30 @@ export default function ParentForm({ modalId, onClose, onSaved }) {
             </Field>
 
             <Field label="Detail Category">
-              <StyledSelect value={formData.detail_category_id} onChange={set('detail_category_id')}>
-                <option value="">Select Category</option>
-                {options.categories.map(c => <option key={c.id} value={c.id}>{c.detail_category}</option>)}
-              </StyledSelect>
+              <SearchableSelect
+                value={formData.detail_category_id}
+                onChange={(id) => setFormData(p => ({ ...p, detail_category_id: id }))}
+                options={options.categories.map(c => ({ id: c.id, label: c.detail_category }))}
+                placeholder="Select Category"
+              />
             </Field>
 
             <Field label="Item Type">
-              <StyledSelect value={formData.item_type_id} onChange={set('item_type_id')}>
-                <option value="">Select Type</option>
-                {options.itemTypes.map(t => <option key={t.id} value={t.id}>{t.type_name}</option>)}
-              </StyledSelect>
+              <SearchableSelect
+                value={formData.item_type_id}
+                onChange={(id) => setFormData(p => ({ ...p, item_type_id: id }))}
+                options={options.itemTypes.map(t => ({ id: t.id, label: t.type_name }))}
+                placeholder="Select Type"
+              />
             </Field>
 
             <Field label="Port">
-              <StyledSelect value={formData.port_id} onChange={set('port_id')}>
-                <option value="">Select Port</option>
-                {options.ports.map(p => <option key={p.id} value={p.id}>{p.port_name}</option>)}
-              </StyledSelect>
+              <SearchableSelect
+                value={formData.port_id}
+                onChange={(id) => setFormData(p => ({ ...p, port_id: id }))}
+                options={options.ports.map(p => ({ id: p.id, label: p.port_name }))}
+                placeholder="Select Port"
+              />
             </Field>
 
             <Field label="Business Unit" hint="auto from Brand">
@@ -333,6 +356,142 @@ export default function ParentForm({ modalId, onClose, onSaved }) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── SearchableSelect — dropdown card dengan search, portal-rendered ───────────
+function SearchableSelect({ value, options = [], onChange, placeholder = 'Select...', required }) {
+  const [open,      setOpen]      = useState(false);
+  const [query,     setQuery]     = useState('');
+  const [dropStyle, setDropStyle] = useState({});
+  const triggerRef  = useRef(null);
+  const searchRef   = useRef(null);
+  const dropRef     = useRef(null);
+
+  const filtered = query
+    ? options.filter(o => o.label.toLowerCase().includes(query.toLowerCase()))
+    : options;
+
+  const selectedLabel = options.find(o => String(o.id) === String(value))?.label;
+
+  const openDrop = () => {
+    if (!triggerRef.current) return;
+    const rect    = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUp  = spaceBelow < 230; // buka ke atas kalau ruang bawah < 230px
+    setDropStyle({
+      position: 'fixed',
+      left:  rect.left,
+      width: Math.max(rect.width, 200),
+      zIndex: 9999,
+      ...(openUp
+        ? { bottom: window.innerHeight - rect.top + 4 }
+        : { top: rect.bottom + 4 }),
+    });
+    setOpen(true);
+    setQuery('');
+    setTimeout(() => searchRef.current?.focus(), 40);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e) => {
+      if (!dropRef.current?.contains(e.target) && !triggerRef.current?.contains(e.target))
+        setOpen(false);
+    };
+    const esc = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc); };
+  }, [open]);
+
+  const isActive = (id) => String(id) === String(value);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {/* Hidden native input for required validation */}
+      {required && (
+        <input
+          tabIndex={-1}
+          required
+          value={value || ''}
+          onChange={() => {}}
+          style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 1, height: 1 }}
+        />
+      )}
+
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={open ? () => setOpen(false) : openDrop}
+        style={{
+          ...inputBase,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          cursor: 'pointer', textAlign: 'left',
+          borderColor: open ? 'rgba(42,157,143,0.55)' : 'rgba(26,42,87,0.16)',
+          boxShadow: open ? '0 0 0 3px rgba(42,157,143,0.12)' : 'none',
+          background: open ? '#fff' : 'rgba(248,250,252,0.9)',
+        }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: selectedLabel ? '#182b58' : '#8496b0' }}>
+          {selectedLabel || placeholder}
+        </span>
+        <ChevronDown size={14} style={{ flexShrink: 0, opacity: 0.5, marginLeft: 6, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+      </button>
+
+      {open && createPortal(
+        <div ref={dropRef} style={{
+          ...dropStyle,
+          background: 'rgba(255,255,255,0.99)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(26,42,87,0.10)',
+          borderRadius: 12,
+          boxShadow: '0 12px 32px rgba(26,42,87,0.14)',
+          overflow: 'hidden',
+        }}>
+          {/* Search input — flex row, icon + input sejajar */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 12px', borderBottom: '1px solid rgba(26,42,87,0.07)' }}>
+            <Search size={13} style={{ opacity: 0.35, flexShrink: 0 }} />
+            <input
+              ref={searchRef}
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Search..."
+              style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: '0.82rem', color: '#182b58', flex: 1, minWidth: 0 }}
+            />
+          </div>
+
+          {/* Options list */}
+          <div style={{ maxHeight: 160, overflowY: 'auto' }}>
+            {filtered.length === 0 ? (
+              <div style={{ padding: '10px 14px', fontSize: '0.8rem', color: '#8496b0', textAlign: 'center' }}>No results</div>
+            ) : filtered.map(opt => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => { onChange(opt.id); setOpen(false); setQuery(''); }}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  width: '100%', padding: '9px 14px',
+                  background: isActive(opt.id) ? 'rgba(42,157,143,0.09)' : 'transparent',
+                  border: 'none', cursor: 'pointer', textAlign: 'left',
+                  fontSize: '0.865rem',
+                  fontWeight: isActive(opt.id) ? 600 : 400,
+                  color: isActive(opt.id) ? '#18786e' : '#2d3f58',
+                  transition: 'background 0.1s',
+                }}
+                onMouseEnter={e => { if (!isActive(opt.id)) e.currentTarget.style.background = 'rgba(26,42,87,0.04)'; }}
+                onMouseLeave={e => { if (!isActive(opt.id)) e.currentTarget.style.background = 'transparent'; }}
+              >
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{opt.label}</span>
+                {isActive(opt.id) && <Check size={13} style={{ flexShrink: 0, marginLeft: 6 }} />}
+              </button>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
